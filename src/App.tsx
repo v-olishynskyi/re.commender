@@ -1,20 +1,29 @@
-import { ThemeProvider, useMediaQuery } from '@mui/material';
 import React from 'react';
+import { Container, useTheme } from '@mui/material';
+import { RecoilRoot } from 'recoil';
+
 import './App.css';
 import Footer from './components/Footer';
 import { Header } from './components/Header';
-import CustomThemeProvider from './context/CustomTheme';
 import AppRouter from './navigation/AppRouter';
 
 function App() {
+  const theme = useTheme();
+
   return (
-    <div className='App'>
-      <CustomThemeProvider>
+    <RecoilRoot>
+      <div className='App'>
         <Header />
-        <AppRouter />
+        <Container
+          component={'main'}
+          className='Site-content'
+          maxWidth='xl'
+          sx={{ flex: 1, backgroundColor: theme.palette.background.default }}>
+          <AppRouter />
+        </Container>
         <Footer />
-      </CustomThemeProvider>
-    </div>
+      </div>
+    </RecoilRoot>
   );
 }
 
