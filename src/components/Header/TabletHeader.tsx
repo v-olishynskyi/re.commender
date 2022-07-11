@@ -1,35 +1,13 @@
 import * as React from 'react';
-import {
-  Avatar,
-  Box,
-  Button,
-  IconButton,
-  Menu,
-  MenuItem,
-  Tooltip,
-  Typography,
-  useTheme,
-} from '@mui/material';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { Box, IconButton, Menu, MenuItem, useTheme } from '@mui/material';
 import AdbIcon from '@mui/icons-material/Adb';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 
-import { ToggleThemeButton } from '../Buttons';
-
-import { PropTypes } from './types';
-import { firebaseAuth } from '../../firebase/firebase';
-
-const TabletHeader: React.FC<PropTypes> = () => {
+const TabletHeader = () => {
   const theme = useTheme();
 
-  const [user] = useAuthState(firebaseAuth);
-  const navigation = useNavigate();
-
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
-    null
-  );
-  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
     null
   );
 
@@ -39,18 +17,6 @@ const TabletHeader: React.FC<PropTypes> = () => {
 
   const handleCloseNavMenu = () => {
     setAnchorElNav(null);
-  };
-
-  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
-
-  const handleClickSignIn = () => {
-    navigation('/login');
   };
 
   return (
@@ -136,51 +102,20 @@ const TabletHeader: React.FC<PropTypes> = () => {
           </MenuItem>
         </Menu>
       </Box>
-      <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
-      <Typography
-        variant='h5'
-        component='span'
-        sx={{
-          mr: 1,
-          flexGrow: 1,
-          fontFamily: 'monospace',
+      <AdbIcon />
+      <Link
+        to={'/'}
+        style={{
           fontWeight: 700,
-        }}
-        fontSize={20}>
+          marginRight: theme.spacing(1),
+          fontFamily: 'monospace',
+          color: theme.palette.text.primary,
+          fontSize: 20,
+          textDecoration: 'none',
+          flexGrow: 1,
+        }}>
         RE.COMMENDER
-      </Typography>
-
-      <Box sx={{ flexGrow: 0 }}>
-        <ToggleThemeButton sx={{ mr: 2 }} />
-        {user ? (
-          <>
-            <Tooltip title='Open settings'>
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt='Remy Sharp' src='/static/images/avatar/2.jpg' />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: '45px' }}
-              id='menu-appbar'
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}></Menu>
-          </>
-        ) : (
-          <Button variant='outlined' onClick={handleClickSignIn}>
-            Увійти
-          </Button>
-        )}
-      </Box>
+      </Link>
     </>
   );
 };
