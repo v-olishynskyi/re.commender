@@ -6,18 +6,21 @@ import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
 import CustomThemeProvider from './context/CustomTheme';
 import { CssBaseline } from '@mui/material';
+import { RecoilRoot } from 'recoil';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <CustomThemeProvider>
-        <CssBaseline />
-        <App />
-      </CustomThemeProvider>
-    </BrowserRouter>
+    <RecoilRoot>
+      <BrowserRouter>
+        <CustomThemeProvider>
+          <CssBaseline />
+          <App />
+        </CustomThemeProvider>
+      </BrowserRouter>
+    </RecoilRoot>
   </React.StrictMode>
 );
 
