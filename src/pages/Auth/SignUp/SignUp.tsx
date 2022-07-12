@@ -11,32 +11,23 @@ import {
   useTheme,
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useSnackbar } from 'notistack';
+
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { firebaseAuth, firebaseDB } from '../../../firebase/firebase';
 import { addDoc, collection } from 'firebase/firestore';
-import { useSnackbar } from 'notistack';
-import { useRecoilState } from 'recoil';
-import { currentUserRecoilState } from '../../../store';
-
-import { getUserDocData } from '../../../api/firebaseRequests';
 
 const SignUp = () => {
   const theme = useTheme();
-  const navigation = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const [currentUserState, setCurrentUserState] = useRecoilState(
-    currentUserRecoilState
-  );
-  console.log(
-    '🚀 ~ file: SignUp.tsx ~ line 32 ~ SignUp ~ currentUserState',
-    currentUserState
-  );
+
+  const [loading, setLoading] = React.useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     try {
       event.preventDefault();
-      setCurrentUserState({ ...currentUserState, loading: true });
+      setLoading(true);
       const data = new FormData(event.currentTarget);
 
       const userCredential = await createUserWithEmailAndPassword(
@@ -56,28 +47,14 @@ const SignUp = () => {
         isAnonymous: false,
       });
 
-      const userDocData = await getUserDocData(user.uid);
-
-      setCurrentUserState({
-        loading: false,
-        user: {
-          ...userDocData,
-        },
-        error: null,
-      });
-
-      setCurrentUserState({ ...currentUserState, loading: false });
+      setLoading(false);
     } catch (error: any) {
       console.log('SignUp.tsx handleSubmit error', error);
-      setCurrentUserState({ ...currentUserState, loading: false });
+      setLoading(false);
 
       enqueueSnackbar(error.message || error, { variant: 'error' });
     }
   };
-
-  React.useEffect(() => {
-    if (currentUserState.user) navigation('/randomizer', { replace: true });
-  }, [currentUserState, navigation]);
 
   return (
     <Container maxWidth={'xs'} disableGutters>
@@ -94,7 +71,7 @@ const SignUp = () => {
           Реєстрація
         </Typography>
         <Box component='form' onSubmit={handleSubmit} noValidate sx={{ mt: 3 }}>
-          <Grid container spacing={2}>
+          <Grid container spacing={2} justifyContent='center'>
             <Grid item xs={12} sm={6}>
               <TextField
                 autoComplete='given-name'
@@ -155,8 +132,10 @@ const SignUp = () => {
               />
             </Grid> */}
           </Grid>
-          {currentUserState.loading ? (
-            <CircularProgress />
+          {loading ? (
+            <Grid container justifyContent='center'>
+              <CircularProgress sx={{ mt: 3, mb: 2 }} />
+            </Grid>
           ) : (
             <Button
               type='submit'

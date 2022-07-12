@@ -16,15 +16,12 @@ function App() {
   const theme = useTheme();
 
   // RECOIL
-  const [currentUserState, setCurrentUserState] = useRecoilState(
-    currentUserRecoilState
-  );
+  const [, setCurrentUserState] = useRecoilState(currentUserRecoilState);
   const resetCurrentUserState = useResetRecoilState(currentUserRecoilState);
 
   React.useEffect(() => {
     onAuthStateChanged(firebaseAuth, async user => {
       if (user) {
-        setCurrentUserState({ ...currentUserState, loading: true });
         const userDocData = await getUserDocData(user.uid);
 
         setCurrentUserState({
@@ -40,7 +37,7 @@ function App() {
 
       return resetCurrentUserState();
     });
-  }, [setCurrentUserState, resetCurrentUserState, currentUserState]);
+  }, [setCurrentUserState, resetCurrentUserState]);
 
   return (
     <SnackbarProvider maxSnack={3}>

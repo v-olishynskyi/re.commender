@@ -162,7 +162,7 @@ export const Header = () => {
               </>
             ) : (
               <>
-                {loading || currentUserState.loading ? (
+                {loading ? (
                   <CircularProgress />
                 ) : isPhone ? (
                   <IconButton onClick={handleClickSignIn}>

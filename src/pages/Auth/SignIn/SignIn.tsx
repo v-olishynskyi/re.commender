@@ -13,47 +13,33 @@ import {
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { Link, useNavigate } from 'react-router-dom';
-import { signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
-import { firebaseAuth } from '../../../firebase/firebase';
 import { useSnackbar } from 'notistack';
-import { currentUserRecoilState } from '../../../store';
-import { useRecoilState } from 'recoil';
+import { signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
 
-import { getUserDocData } from '../../../api/firebaseRequests';
+import { firebaseAuth } from '../../../firebase/firebase';
 
 const SignIn = () => {
   const navigation = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
-  const [currentUserState, setCurrentUserState] = useRecoilState(
-    currentUserRecoilState
-  );
+  const [loading, setLoading] = React.useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
-      setCurrentUserState({ ...currentUserState, loading: true });
+      setLoading(true);
       const data = new FormData(event.currentTarget);
-      const userCredential = await signInWithEmailAndPassword(
+
+      await signInWithEmailAndPassword(
         firebaseAuth,
         String(data.get('email')),
         String(data.get('password'))
       );
 
-      const userDocData = await getUserDocData(userCredential.user.uid);
-
-      setCurrentUserState({
-        loading: false,
-        user: {
-          ...userDocData,
-        },
-        error: null,
-      });
-
-      setCurrentUserState({ ...currentUserState, loading: false });
-      navigation('/randomizer');
+      setLoading(false);
+      navigation('/randomizer', { replace: true });
     } catch (error: any) {
-      setCurrentUserState({ ...currentUserState, loading: false });
+      setLoading(false);
       enqueueSnackbar(error.message || error, { variant: 'error' });
     }
   };
@@ -62,10 +48,6 @@ const SignIn = () => {
     await signInAnonymously(firebaseAuth);
     navigation('/randomizer', { replace: true });
   };
-
-  React.useEffect(() => {
-    if (currentUserState.user) navigation('/randomizer');
-  }, [currentUserState, navigation]);
 
   return (
     <Container maxWidth={'xs'} disableGutters>
@@ -106,7 +88,7 @@ const SignIn = () => {
             control={<Checkbox value='remember' color='primary' />}
             label='Запамʼятати мене'
           />
-          {currentUserState.loading ? (
+          {loading ? (
             <CircularProgress />
           ) : (
             <>
@@ -114,8 +96,7 @@ const SignIn = () => {
                 type='submit'
                 fullWidth
                 variant='contained'
-                sx={{ mt: 3, mb: 0 }}
-                disabled={currentUserState.loading}>
+                sx={{ mt: 3, mb: 0 }}>
                 Увійти
               </Button>
               <Button
