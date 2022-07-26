@@ -5,8 +5,9 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
 import CustomThemeProvider from './context/CustomTheme';
-import { CssBaseline } from '@mui/material';
+import { Box, CircularProgress, CssBaseline } from '@mui/material';
 import { RecoilRoot } from 'recoil';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -15,10 +16,26 @@ root.render(
   <React.StrictMode>
     <RecoilRoot>
       <BrowserRouter>
-        <CustomThemeProvider>
-          <CssBaseline />
-          <App />
-        </CustomThemeProvider>
+        <React.Suspense
+          fallback={
+            <Box
+              sx={{
+                width: '100vw',
+                height: '100vh',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <CircularProgress />
+            </Box>
+          }>
+          <ErrorBoundary>
+            <CustomThemeProvider>
+              <CssBaseline />
+              <App />
+            </CustomThemeProvider>
+          </ErrorBoundary>
+        </React.Suspense>
       </BrowserRouter>
     </RecoilRoot>
   </React.StrictMode>

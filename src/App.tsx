@@ -9,22 +9,23 @@ import Footer from './components/Footer';
 import { Header } from './components/Header';
 import AppRouter from './navigation/AppRouter';
 import { firebaseAuth } from './firebase/firebase';
-import { currentUserRecoilState } from './store';
 import { getUserDocData } from './api/firebaseRequests';
+import userAtom from './recoil/userStore';
 
 function App() {
   const theme = useTheme();
 
   // RECOIL
-  const [, setCurrentUserState] = useRecoilState(currentUserRecoilState);
-  const resetCurrentUserState = useResetRecoilState(currentUserRecoilState);
+  const [user, setUser] = useRecoilState(userAtom);
+  const resetCurrentUserState = useResetRecoilState(userAtom);
+  console.log('USER', user);
 
   React.useEffect(() => {
     onAuthStateChanged(firebaseAuth, async user => {
       if (user) {
         const userDocData = await getUserDocData(user.uid);
 
-        setCurrentUserState({
+        setUser({
           loading: false,
           user: {
             ...userDocData,
@@ -37,10 +38,10 @@ function App() {
 
       return resetCurrentUserState();
     });
-  }, [setCurrentUserState, resetCurrentUserState]);
+  }, [setUser, resetCurrentUserState]);
 
   return (
-    <SnackbarProvider maxSnack={3}>
+    <SnackbarProvider maxSnack={3} autoHideDuration={4000}>
       <div className='App'>
         <Header />
         <Container

@@ -14,7 +14,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { useRecoilValue } from 'recoil';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import LoginIcon from '@mui/icons-material/Login';
 import ProfileIcon from '@mui/icons-material/AccountCircle';
@@ -22,25 +22,26 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import SignOutIcon from '@mui/icons-material/Logout';
 import { signOut } from 'firebase/auth';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { useSnackbar } from 'notistack';
 
 import MobileHeader from './MobileHeader';
 import TabletHeader from './TabletHeader';
 import DesktopHeader from './DesktopHeader';
 import { ToggleThemeButton } from '../Buttons';
-import { currentUserRecoilState, snackState } from '../../store';
 import { firebaseAuth } from '../../firebase/firebase';
 import { makeAvatarLetters } from '../../utils/startCase';
 import { stringAvatar } from '../../utils/stringAvatars';
+import userAtom from '../../recoil/userStore';
 
 export const Header = () => {
   const theme = useTheme();
   const navigation = useNavigate();
   const location = useLocation();
+  const { enqueueSnackbar } = useSnackbar();
 
-  const currentUserState = useRecoilValue(currentUserRecoilState);
+  const { user } = useRecoilValue(userAtom);
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
-  const setSnack = useSetRecoilState(snackState);
   const [, loading] = useAuthState(firebaseAuth);
 
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
@@ -67,11 +68,8 @@ export const Header = () => {
         '🚀 ~ file: index.tsx ~ line 58 ~ handleCLickSignOut ~ error',
         error
       );
-      setSnack({
-        show: true,
-        message: error.message || error,
-        severity: 'error',
-      });
+
+      enqueueSnackbar(error.message || error, { variant: 'error' });
     }
   };
 
@@ -90,24 +88,18 @@ export const Header = () => {
           )}
           <Box sx={{ flexGrow: 0 }}>
             <ToggleThemeButton sx={{ mr: 2 }} />
-            {currentUserState.user ? (
+            {user ? (
               <>
                 <Tooltip title='Open settings'>
                   <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
                     <Avatar
                       src='/static/images/avatar/2.jpg'
                       sx={{
-                        ...stringAvatar(
-                          `${currentUserState.user!.name} ${
-                            currentUserState.user!.family_name
-                          }`
-                        ),
+                        ...stringAvatar(`${user!.name} ${user!.family_name}`),
                       }}>
-                      {currentUserState.user.isAnonymous
+                      {user.isAnonymous
                         ? 'AN'
-                        : makeAvatarLetters(
-                            `${currentUserState.user.name} ${currentUserState.user.family_name}`
-                          )}
+                        : makeAvatarLetters(`${user.name} ${user.family_name}`)}
                     </Avatar>
                   </IconButton>
                 </Tooltip>

@@ -1,43 +1,40 @@
 import React from 'react';
 import { useRecoilValue, useResetRecoilState } from 'recoil';
 import { Snackbar, Alert } from '@mui/material';
-
-import { snackState } from '../../store';
+import snackAtom from '../../recoil/snackStore';
 
 const GlobalSnackbar = () => {
-  const snackStateValue = useRecoilValue(snackState);
-  const resetSnackState = useResetRecoilState(snackState);
+  const snackStore = useRecoilValue(snackAtom);
+  const resetSnackState = useResetRecoilState(snackAtom);
 
   return (
     <>
-      {snackStateValue ? (
+      {snackStore ? (
         <Snackbar
-          open={snackStateValue.show}
-          autoHideDuration={snackStateValue.autoHideDuration || 6000}
+          open={snackStore.show}
+          autoHideDuration={snackStore.autoHideDuration || 6000}
           onClose={(event, reason) => {
             if (reason === 'clickaway') {
               return;
             }
 
-            (snackStateValue.handleClose && snackStateValue.handleClose()) ||
+            (snackStore.handleClose && snackStore.handleClose()) ||
               resetSnackState();
           }}
-          message={
-            snackStateValue.isSimpleSnack ? snackStateValue.message || '' : ''
-          }
-          sx={snackStateValue.isSimpleSnack ? snackStateValue.sx : undefined}
+          message={snackStore.isSimpleSnack ? snackStore.message || '' : ''}
+          sx={snackStore.isSimpleSnack ? snackStore.sx : undefined}
           anchorOrigin={
-            snackStateValue.anchorOrigin || {
+            snackStore.anchorOrigin || {
               horizontal: 'left',
               vertical: 'bottom',
             }
           }>
-          {!snackStateValue.isSimpleSnack || snackStateValue.severity ? (
+          {!snackStore.isSimpleSnack || snackStore.severity ? (
             <Alert
-              onClose={snackStateValue.handleClose || resetSnackState}
-              severity={snackStateValue.severity || 'info'}
-              sx={snackStateValue.sx || undefined}>
-              {snackStateValue.message || ''}
+              onClose={snackStore.handleClose || resetSnackState}
+              severity={snackStore.severity || 'info'}
+              sx={snackStore.sx || undefined}>
+              {snackStore.message || ''}
             </Alert>
           ) : undefined}
         </Snackbar>

@@ -1,7 +1,7 @@
 import { AlertColor, SnackbarOrigin, SxProps } from '@mui/material';
 import { Theme } from '@mui/system';
 
-export type SnackStateType = {
+export type SnackStoreType = {
   show: boolean;
   message: string;
   isSimpleSnack?: boolean;

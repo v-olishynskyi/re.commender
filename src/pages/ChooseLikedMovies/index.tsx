@@ -1,15 +1,125 @@
 import React from 'react';
-import { Box, Button, Grid, IconButton, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Grid,
+  IconButton,
+  Typography,
+} from '@mui/material';
 import { useRecoilState } from 'recoil';
+import { useSnackbar } from 'notistack';
+import CheckCircleIcon from '@mui/icons-material/Check';
 
-import { currentUserRecoilState } from '../../store';
+import { tmdb_getPopularMovies } from '../../api/tmdb';
+import { addDoc, collection } from 'firebase/firestore';
+import { firebaseDB } from '../../firebase/firebase';
+import { useNavigate } from 'react-router-dom';
+import { Movie } from '../../types';
+import userAtom from '../../recoil/userStore';
 
 const ChooseLikedMoviesPage = () => {
-  const [currentUserState, setCurrentUserState] = useRecoilState(
-    currentUserRecoilState
+  const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
+  const [{ user }, setCurrentUserState] = useRecoilState(userAtom);
+
+  const [loading, setLoading] = React.useState(false);
+  const [movies, setMovies] = React.useState<Array<Movie> | null>(null);
+  const [selectedMovies, setSelectedMovies] = React.useState<Array<Movie>>([]);
+
+  const isCanContinue = React.useMemo(
+    () => selectedMovies.length >= 3,
+    [selectedMovies]
   );
 
-  const [canContinue, setCanContinue] = React.useState(false);
+  const selectedMoviesIDs = React.useMemo(
+    () => selectedMovies.map(item => item.id),
+    [selectedMovies]
+  );
+  const selectedMoviesGenreIDs = React.useMemo(() => {
+    const genresSet = new Set(
+      selectedMovies.map(item => item.genre_ids).flat(1)
+    );
+
+    return Array.from(genresSet);
+  }, [selectedMovies]);
+
+  React.useEffect(() => {
+    const request = async () => {
+      try {
+        setLoading(true);
+        const data = await tmdb_getPopularMovies({});
+        setMovies(data.results);
+        setLoading(false);
+      } catch (error: any) {
+        setLoading(false);
+        enqueueSnackbar(`Щось пішло не так - ${error.message || error}`, {
+          variant: 'error',
+        });
+      }
+    };
+
+    request();
+  }, [enqueueSnackbar]);
+
+  const handleClickMovie = (movie: Movie) => {
+    const movieIndex = selectedMovies.findIndex(item => item.id === movie.id);
+
+    if (movieIndex !== -1) {
+      const newMovies = selectedMovies.filter(
+        (_, index) => index !== movieIndex
+      );
+      return setSelectedMovies(newMovies);
+    } else {
+      const newMovies = [...selectedMovies];
+      newMovies.push(movie);
+      return setSelectedMovies(newMovies);
+    }
+  };
+
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+
+      const movies = selectedMovies.map(movie => ({
+        id: movie.id,
+        title: movie.title,
+        poster_path: movie.poster_path,
+        genre_ids: movie.genre_ids,
+      }));
+
+      const data = {
+        userUID: 'users/ZTvBEjPfg9pVqBVafKeJ',
+        movies,
+      };
+
+      await addDoc(collection(firebaseDB, 'usersLibraries'), data);
+      setCurrentUserState(prevState => ({
+        ...prevState,
+        user: {
+          ...prevState.user!,
+          userFilmsIDs: selectedMoviesIDs,
+          userGenresIDs: selectedMoviesGenreIDs,
+          userLibrary: movies,
+        },
+      }));
+
+      navigate('/libraries', {
+        replace: true,
+        state: { movies: selectedMovies },
+      });
+
+      setLoading(false);
+    } catch (error: any) {
+      setLoading(false);
+      enqueueSnackbar(
+        `Щось пішло не так. Спробуйте ще раз - ${error.message || error}`,
+        {
+          variant: 'error',
+        }
+      );
+    }
+  };
 
   return (
     <>
@@ -18,7 +128,7 @@ const ChooseLikedMoviesPage = () => {
           variant='h4'
           color='text.secondary'
           sx={{ verticalAlign: 'middle' }}>
-          {currentUserState.user?.name}
+          {user!.name}
           <Typography component='span' variant='h5'>
             , виберіть 3 (або більше) фільмів які вам подобаються
           </Typography>
@@ -32,28 +142,63 @@ const ChooseLikedMoviesPage = () => {
           сподобатися.
         </Typography>
       </Box>
-      <Button variant='contained' sx={{ mt: 3, mb: 3 }} disabled={!canContinue}>
+      <Button
+        variant='contained'
+        sx={{ mt: 3, mb: 3 }}
+        disabled={!isCanContinue || loading}
+        onClick={handleSubmit}>
         Продовжити
       </Button>
       <Box>
-        <Grid container spacing={1}>
-          {/* @ts-ignore */}
-          {[
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-          ].map(() => (
-            <Grid item>
-              <IconButton
-                sx={{
-                  width: '140px',
-                  height: '190px',
-                  backgroundColor: 'yellow',
-                  borderRadius: 0,
-                }}>
-                {/* <img /> */}
-              </IconButton>
+        {loading ? (
+          <CircularProgress />
+        ) : (
+          <>
+            <Grid container>
+              {movies &&
+                movies!.length &&
+                movies!.map((item, index) => (
+                  <Grid
+                    item
+                    key={index}
+                    component={IconButton}
+                    onClick={() => {
+                      handleClickMovie(item);
+                    }}>
+                    <Box
+                      sx={{
+                        width: '140px',
+                        height: '190px',
+                        borderRadius: 0,
+                        opacity: selectedMoviesIDs.includes(item.id) ? 0.5 : 1,
+                      }}>
+                      <img
+                        src={`https://image.tmdb.org/t/p/w200/${item.poster_path}`}
+                        width='100%'
+                        height='100%'
+                        alt={item.title}
+                        title={item.title}
+                      />
+                    </Box>
+                    {selectedMoviesIDs.includes(item.id) && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                        }}>
+                        <CheckCircleIcon
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            color: 'green',
+                          }}
+                        />
+                      </Box>
+                    )}
+                  </Grid>
+                ))}
             </Grid>
-          ))}
-        </Grid>
+          </>
+        )}
       </Box>
     </>
   );

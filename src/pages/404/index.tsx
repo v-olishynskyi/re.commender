@@ -2,7 +2,7 @@ import React from 'react';
 import { Container, Typography } from '@mui/material';
 import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied';
 
-const Error = () => {
+const PageNotFound = () => {
   return (
     <Container
       disableGutters
@@ -27,4 +27,4 @@ const Error = () => {
   );
 };
 
-export default Error;
+export default PageNotFound;

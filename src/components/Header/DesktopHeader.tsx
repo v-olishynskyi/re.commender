@@ -46,6 +46,18 @@ export const DesktopHeader = () => {
           })}>
           ВИПАДКОВИЙ ФІЛЬМ
         </NavLink>
+        <NavLink
+          to='/library'
+          style={({ isActive }) => ({
+            marginRight: theme.spacing(2),
+            fontWeight: 'bold',
+            color: isActive
+              ? theme.palette.primary.main
+              : theme.palette.text.primary,
+            textDecoration: 'none',
+          })}>
+          МОЯ БІБЛІОТЕКА
+        </NavLink>
       </Box>
     </>
   );

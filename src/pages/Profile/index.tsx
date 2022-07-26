@@ -12,12 +12,12 @@ import {
 import { useRecoilState } from 'recoil';
 import EditIcon from '@mui/icons-material/Edit';
 
-import { currentUserRecoilState } from '../../store';
 import { makeAvatarLetters } from '../../utils/startCase';
 import { stringAvatar } from '../../utils/stringAvatars';
 import { doc, updateDoc } from 'firebase/firestore';
 import { firebaseDB } from '../../firebase/firebase';
 import { getUserDoc, getUserDocData } from '../../api/firebaseRequests';
+import userAtom from '../../recoil/userStore';
 
 type FormFieldEditedState = {
   name: boolean;
@@ -30,9 +30,7 @@ const defaultFieldsState: FormFieldEditedState = {
 };
 
 const ProfilePage = () => {
-  const [currentUserState, setCurrentUserState] = useRecoilState(
-    currentUserRecoilState
-  );
+  const [userStore, setUserStore] = useRecoilState(userAtom);
 
   const [isEditedField, setIsEditedField] =
     React.useState<FormFieldEditedState>(defaultFieldsState);
@@ -44,33 +42,33 @@ const ProfilePage = () => {
 
   const handleSubmitForm = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setCurrentUserState({ ...currentUserState, loading: true });
+    setUserStore({ ...userStore, loading: true });
 
     const formData = new FormData(event.currentTarget);
     const name = formData.get('name');
     const family_name = formData.get('family_name');
 
-    const userDoc = await getUserDoc(currentUserState.user!.uid);
+    const userDoc = await getUserDoc(userStore.user!.uid);
     const docRef = doc(firebaseDB, 'users', userDoc.id);
 
     await updateDoc(docRef, { name, family_name });
 
-    const userDocData = await getUserDocData(currentUserState.user!.uid);
+    const userDocData = await getUserDocData(userStore.user!.uid);
 
-    setCurrentUserState({
-      ...currentUserState,
+    setUserStore({
+      ...userStore,
       user: {
         ...userDocData,
       },
     });
 
     setIsEditedField(defaultFieldsState);
-    setCurrentUserState({ ...currentUserState, loading: false });
+    setUserStore({ ...userStore, loading: false });
   };
 
   return (
     <Container disableGutters maxWidth={'md'} sx={{ position: 'relative' }}>
-      {currentUserState.user ? (
+      {userStore.user ? (
         <>
           <Box
             sx={{
@@ -83,18 +81,16 @@ const ProfilePage = () => {
                 src='/static/images/avatar/2.jpg'
                 sx={{
                   ...stringAvatar(
-                    `${currentUserState.user!.name} ${
-                      currentUserState.user!.family_name
-                    }`
+                    `${userStore.user!.name} ${userStore.user!.family_name}`
                   ),
                   width: '150px',
                   height: '150px',
                   fontSize: '80px',
                 }}>
-                {currentUserState.user.isAnonymous
+                {userStore.user.isAnonymous
                   ? 'AN'
                   : makeAvatarLetters(
-                      `${currentUserState.user.name} ${currentUserState.user.family_name}`
+                      `${userStore.user.name} ${userStore.user.family_name}`
                     )}
               </Avatar>
               <IconButton
@@ -126,7 +122,7 @@ const ProfilePage = () => {
                     name='email'
                     autoComplete='email'
                     type='email'
-                    defaultValue={currentUserState.user.email}
+                    defaultValue={userStore.user.email}
                     disabled
                   />
                 </Grid>
@@ -137,7 +133,7 @@ const ProfilePage = () => {
                     fullWidth
                     id='firstName'
                     label='Імʼя'
-                    defaultValue={currentUserState.user.name}
+                    defaultValue={userStore.user.name}
                     disabled={!isEditedField.name}
                     InputProps={{
                       endAdornment: (
@@ -156,7 +152,7 @@ const ProfilePage = () => {
                     label='Прізвище'
                     name='family_name'
                     autoComplete='family-name'
-                    defaultValue={currentUserState.user.family_name}
+                    defaultValue={userStore.user.family_name}
                     disabled={!isEditedField.family_name}
                     InputProps={{
                       endAdornment: (
@@ -172,7 +168,7 @@ const ProfilePage = () => {
                 </Grid>
               </Grid>
               <Grid item xs={12} sx={{ mt: 3 }}>
-                {currentUserState.loading ? (
+                {userStore.loading ? (
                   <CircularProgress />
                 ) : (
                   <Button type='submit' variant='contained'>
