@@ -39,14 +39,16 @@ export const Header = () => {
   const location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
 
-  const { user } = useRecoilValue(userAtom);
+  const { user, loading } = useRecoilValue(userAtom);
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
-  const [, loading] = useAuthState(firebaseAuth);
+  // const [, loading] = useAuthState(firebaseAuth);
 
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
     null
   );
+
+  console.log('loading', loading);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
@@ -156,16 +158,29 @@ export const Header = () => {
               <>
                 {loading ? (
                   <CircularProgress />
+                ) : !user ? (
+                  <Button variant='outlined' onClick={handleClickSignIn}>
+                    Увійти
+                  </Button>
                 ) : isPhone ? (
                   <IconButton onClick={handleClickSignIn}>
                     <LoginIcon color={'primary'} />
                   </IconButton>
-                ) : (
-                  <Button variant='outlined' onClick={handleClickSignIn}>
-                    Увійти
-                  </Button>
-                )}
+                ) : null}
               </>
+              // <>
+              //   {loading ? (
+              //     <CircularProgress />
+              //   ) : isPhone ? (
+              //     <IconButton onClick={handleClickSignIn}>
+              //       <LoginIcon color={'primary'} />
+              //     </IconButton>
+              //   ) : (
+              //     <Button variant='outlined' onClick={handleClickSignIn}>
+              //       Увійти
+              //     </Button>
+              //   )}
+              // </>
             )}
           </Box>
         </Toolbar>

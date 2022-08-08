@@ -12,16 +12,23 @@ import { useSnackbar } from 'notistack';
 import CheckCircleIcon from '@mui/icons-material/Check';
 
 import { tmdb_getPopularMovies } from '../../api/tmdb';
-import { addDoc, collection } from 'firebase/firestore';
+import {
+  addDoc,
+  collection,
+  DocumentData,
+  QueryDocumentSnapshot,
+} from 'firebase/firestore';
 import { firebaseDB } from '../../firebase/firebase';
 import { useNavigate } from 'react-router-dom';
-import { Movie } from '../../types';
+import { Movie, MovieCart } from '../../types';
 import userAtom from '../../recoil/userStore';
+import { getUserDoc, updateUserDoc } from '../../api/firebaseRequests';
+import { getImageURI } from '../../utils/getImageURI';
 
 const ChooseLikedMoviesPage = () => {
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
-  const [{ user }, setCurrentUserState] = useRecoilState(userAtom);
+  const [{ user }, setUserState] = useRecoilState(userAtom);
 
   const [loading, setLoading] = React.useState(false);
   const [movies, setMovies] = React.useState<Array<Movie> | null>(null);
@@ -36,13 +43,13 @@ const ChooseLikedMoviesPage = () => {
     () => selectedMovies.map(item => item.id),
     [selectedMovies]
   );
-  const selectedMoviesGenreIDs = React.useMemo(() => {
-    const genresSet = new Set(
-      selectedMovies.map(item => item.genre_ids).flat(1)
-    );
+  // const selectedMoviesGenreIDs = React.useMemo(() => {
+  //   const genresSet = new Set(
+  //     selectedMovies.map(item => item.genre_ids).flat(1)
+  //   );
 
-    return Array.from(genresSet);
-  }, [selectedMovies]);
+  //   return Array.from(genresSet);
+  // }, [selectedMovies]);
 
   React.useEffect(() => {
     const request = async () => {
@@ -81,30 +88,35 @@ const ChooseLikedMoviesPage = () => {
     try {
       setLoading(true);
 
-      const movies = selectedMovies.map(movie => ({
+      const movies: Array<MovieCart> = selectedMovies.map(movie => ({
         id: movie.id,
         title: movie.title,
         poster_path: movie.poster_path,
         genre_ids: movie.genre_ids,
       }));
 
+      const userDoc = (await getUserDoc(
+        user!.uid
+      )) as QueryDocumentSnapshot<DocumentData>;
+
       const data = {
-        userUID: 'users/ZTvBEjPfg9pVqBVafKeJ',
+        userUID: `users/${userDoc.id}`,
         movies,
       };
 
       await addDoc(collection(firebaseDB, 'usersLibraries'), data);
-      setCurrentUserState(prevState => ({
+      await updateUserDoc(user!.uid, { isAlreadyChooseMovies: true });
+
+      setUserState(prevState => ({
         ...prevState,
         user: {
           ...prevState.user!,
-          userFilmsIDs: selectedMoviesIDs,
-          userGenresIDs: selectedMoviesGenreIDs,
-          userLibrary: movies,
+          library: selectedMovies,
+          isAlreadyChooseMovies: true,
         },
       }));
 
-      navigate('/libraries', {
+      navigate('/library', {
         replace: true,
         state: { movies: selectedMovies },
       });
@@ -123,37 +135,37 @@ const ChooseLikedMoviesPage = () => {
 
   return (
     <>
-      <Box display={'flex'} flexDirection='column'>
-        <Typography
-          variant='h4'
-          color='text.secondary'
-          sx={{ verticalAlign: 'middle' }}>
-          {user!.name}
-          <Typography component='span' variant='h5'>
-            , виберіть 3 (або більше) фільмів які вам подобаються
-          </Typography>
-        </Typography>
-        <Typography
-          component='p'
-          variant='body1'
-          sx={{ mt: 1 }}
-          color='text.secondary'>
-          Це допоможе нам знайти фільми та ТВ-програми які можуть вам
-          сподобатися.
-        </Typography>
-      </Box>
-      <Button
-        variant='contained'
-        sx={{ mt: 3, mb: 3 }}
-        disabled={!isCanContinue || loading}
-        onClick={handleSubmit}>
-        Продовжити
-      </Button>
-      <Box>
-        {loading ? (
-          <CircularProgress />
-        ) : (
-          <>
+      {loading || !user ? (
+        <CircularProgress />
+      ) : (
+        <>
+          <Box display={'flex'} flexDirection='column'>
+            <Typography
+              variant='h4'
+              color='text.secondary'
+              sx={{ verticalAlign: 'middle' }}>
+              {user?.name}
+              <Typography component='span' variant='h5'>
+                , виберіть 3 (або більше) фільмів які вам подобаються
+              </Typography>
+            </Typography>
+            <Typography
+              component='p'
+              variant='body1'
+              sx={{ mt: 1 }}
+              color='text.secondary'>
+              Це допоможе нам знайти фільми та ТВ-програми які можуть вам
+              сподобатися.
+            </Typography>
+          </Box>
+          <Button
+            variant='contained'
+            sx={{ mt: 3, mb: 3 }}
+            disabled={!isCanContinue || loading}
+            onClick={handleSubmit}>
+            Продовжити
+          </Button>
+          <Box>
             <Grid container>
               {movies &&
                 movies!.length &&
@@ -173,7 +185,7 @@ const ChooseLikedMoviesPage = () => {
                         opacity: selectedMoviesIDs.includes(item.id) ? 0.5 : 1,
                       }}>
                       <img
-                        src={`https://image.tmdb.org/t/p/w200/${item.poster_path}`}
+                        src={getImageURI(200, item.poster_path!)}
                         width='100%'
                         height='100%'
                         alt={item.title}
@@ -197,9 +209,9 @@ const ChooseLikedMoviesPage = () => {
                   </Grid>
                 ))}
             </Grid>
-          </>
-        )}
-      </Box>
+          </Box>
+        </>
+      )}
     </>
   );
 };

@@ -3,42 +3,56 @@ import { Container, useTheme } from '@mui/material';
 import { useRecoilState, useResetRecoilState } from 'recoil';
 import { onAuthStateChanged } from 'firebase/auth';
 import { SnackbarProvider } from 'notistack';
+import { useNavigate } from 'react-router-dom';
 
 import './App.css';
 import Footer from './components/Footer';
 import { Header } from './components/Header';
 import AppRouter from './navigation/AppRouter';
 import { firebaseAuth } from './firebase/firebase';
-import { getUserDocData } from './api/firebaseRequests';
+import { getUserDoc } from './api/firebaseRequests';
 import userAtom from './recoil/userStore';
+import { UserType } from './types';
 
 function App() {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   // RECOIL
   const [user, setUser] = useRecoilState(userAtom);
-  const resetCurrentUserState = useResetRecoilState(userAtom);
+  const resetUserState = useResetRecoilState(userAtom);
   console.log('USER', user);
 
   React.useEffect(() => {
-    onAuthStateChanged(firebaseAuth, async user => {
-      if (user) {
-        const userDocData = await getUserDocData(user.uid);
+    onAuthStateChanged(firebaseAuth, async fbUser => {
+      try {
+        console.log('FIREBASE user', fbUser);
+        if (fbUser) {
+          setUser({ ...user, loading: true, error: null });
+          const userDocData = (await getUserDoc(fbUser.uid, true)) as UserType;
 
-        setUser({
-          loading: false,
-          user: {
-            ...userDocData,
-          },
-          error: null,
-        });
+          setUser({
+            loading: false,
+            user: {
+              ...userDocData,
+            },
+            error: null,
+          });
 
-        return;
+          if (!userDocData?.isAlreadyChooseMovies) {
+            navigate('/chooseLikedMovies', { replace: true });
+          }
+
+          return;
+        }
+
+        return resetUserState();
+      } catch (error: any) {
+        console.log('FIREBASE AUTH ERROR', error);
+        setUser({ ...user, loading: false, error: error.message || error });
       }
-
-      return resetCurrentUserState();
     });
-  }, [setUser, resetCurrentUserState]);
+  }, [setUser, resetUserState, navigate]);
 
   return (
     <SnackbarProvider maxSnack={3} autoHideDuration={4000}>

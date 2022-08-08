@@ -7,12 +7,18 @@ export type UserType = {
   family_name: string;
   authProvider?: string;
   isAnonymous?: boolean;
-  userFilmsIDs?: Array<number>;
-  userGenresIDs?: Array<number>;
+  isAlreadyChooseMovies: boolean;
   library?: UserLibrary;
 };
 
 export type UserLibrary = Maybe<Array<Movie>>;
+
+export type MovieCart = {
+  id: number;
+  title: string;
+  poster_path: Maybe<string>;
+  genre_ids: Array<number>;
+};
 
 type Genre = {
   id: number;

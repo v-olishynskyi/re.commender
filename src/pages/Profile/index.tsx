@@ -14,10 +14,16 @@ import EditIcon from '@mui/icons-material/Edit';
 
 import { makeAvatarLetters } from '../../utils/startCase';
 import { stringAvatar } from '../../utils/stringAvatars';
-import { doc, updateDoc } from 'firebase/firestore';
+import {
+  doc,
+  DocumentData,
+  QueryDocumentSnapshot,
+  updateDoc,
+} from 'firebase/firestore';
 import { firebaseDB } from '../../firebase/firebase';
-import { getUserDoc, getUserDocData } from '../../api/firebaseRequests';
+import { getUserDoc } from '../../api/firebaseRequests';
 import userAtom from '../../recoil/userStore';
+import { UserType } from '../../types';
 
 type FormFieldEditedState = {
   name: boolean;
@@ -48,12 +54,14 @@ const ProfilePage = () => {
     const name = formData.get('name');
     const family_name = formData.get('family_name');
 
-    const userDoc = await getUserDoc(userStore.user!.uid);
+    const userDoc = (await getUserDoc(
+      userStore.user!.uid
+    )) as QueryDocumentSnapshot<DocumentData>;
     const docRef = doc(firebaseDB, 'users', userDoc.id);
 
     await updateDoc(docRef, { name, family_name });
 
-    const userDocData = await getUserDocData(userStore.user!.uid);
+    const userDocData = userDoc.data() as UserType;
 
     setUserStore({
       ...userStore,

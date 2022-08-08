@@ -2,9 +2,12 @@ import * as React from 'react';
 import { Box, useTheme } from '@mui/material';
 import AdbIcon from '@mui/icons-material/Adb';
 import { Link, NavLink } from 'react-router-dom';
+import { useRecoilValue } from 'recoil';
+import userAtom from '../../recoil/userStore';
 
 export const DesktopHeader = () => {
   const theme = useTheme();
+  const { user } = useRecoilValue(userAtom);
 
   return (
     <>
@@ -46,18 +49,20 @@ export const DesktopHeader = () => {
           })}>
           ВИПАДКОВИЙ ФІЛЬМ
         </NavLink>
-        <NavLink
-          to='/library'
-          style={({ isActive }) => ({
-            marginRight: theme.spacing(2),
-            fontWeight: 'bold',
-            color: isActive
-              ? theme.palette.primary.main
-              : theme.palette.text.primary,
-            textDecoration: 'none',
-          })}>
-          МОЯ БІБЛІОТЕКА
-        </NavLink>
+        {user && (
+          <NavLink
+            to='/library'
+            style={({ isActive }) => ({
+              marginRight: theme.spacing(2),
+              fontWeight: 'bold',
+              color: isActive
+                ? theme.palette.primary.main
+                : theme.palette.text.primary,
+              textDecoration: 'none',
+            })}>
+            МОЯ БІБЛІОТЕКА
+          </NavLink>
+        )}
       </Box>
     </>
   );

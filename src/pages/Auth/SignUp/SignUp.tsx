@@ -17,6 +17,7 @@ import { useSnackbar } from 'notistack';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { firebaseAuth, firebaseDB } from '../../../firebase/firebase';
 import { addDoc, collection } from 'firebase/firestore';
+import { UserType } from '../../../types';
 
 const SignUp = () => {
   const theme = useTheme();
@@ -28,24 +29,27 @@ const SignUp = () => {
     try {
       event.preventDefault();
       setLoading(true);
-      const data = new FormData(event.currentTarget);
+      const formData = new FormData(event.currentTarget);
 
       const userCredential = await createUserWithEmailAndPassword(
         firebaseAuth,
-        String(data.get('email')),
-        String(data.get('password'))
+        String(formData.get('email')),
+        String(formData.get('password'))
       );
 
       const user = userCredential.user;
 
-      await addDoc(collection(firebaseDB, 'users'), {
+      const data: UserType = {
         uid: user.uid,
-        email: String(data.get('email')),
-        name: String(data.get('firstName')),
-        family_name: String(data.get('lastName')),
+        email: String(formData.get('email')),
+        name: String(formData.get('firstName')),
+        family_name: String(formData.get('lastName')),
         authProvider: 'local',
         isAnonymous: false,
-      });
+        isAlreadyChooseMovies: false,
+      };
+
+      await addDoc(collection(firebaseDB, 'users'), data);
 
       setLoading(false);
     } catch (error: any) {

@@ -26,7 +26,16 @@ const AppRouter = () => {
       <Route path='/library' element={<LibraryPage />} />
       <Route path='/profile' element={<ProfilePage />} />
       <Route path='/randomizer' element={<RandomizerPage />} />
-      <Route path='/chooseLikedMovies' element={<ChooseLikedMoviesPage />} />
+      <Route
+        path='/chooseLikedMovies'
+        element={
+          !user?.isAlreadyChooseMovies ? (
+            <ChooseLikedMoviesPage />
+          ) : (
+            <Navigate to='/' replace />
+          )
+        }
+      />
 
       <Route path='*' element={<PageNotFound />} />
     </Routes>
